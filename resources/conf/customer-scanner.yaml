@@ -1,0 +1,5 @@
+customer-scanner:
+  paging-state-path:  customer-migration.paging-state
+  reset:  false
+  fetch-size: 1000
+  block-size: 100

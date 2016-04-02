@@ -1,0 +1,2 @@
+customer-migrator:
+  log-file: migrated-customers.txt
