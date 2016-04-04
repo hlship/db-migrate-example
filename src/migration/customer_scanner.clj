@@ -23,15 +23,16 @@
     "Return a channel that conveys a series of customer ids."))
 
 (defn ^:private do-scan
-  [component reset?]
-  (let [{:keys [status-board fetch-size connection]} component
+  [component]
+  (let [{:keys [status-board connection fetch-size block-size reset]} component
         job-ch (add-job status-board)
-        ch (chan fetch-size)
+        ch (chan block-size)
         customer-ids-ch (chan fetch-size)]
     ;; This is where the query would normally go; further, this is where we woudl use
-    ;; reset? to discard any saved paging state.
+    ;; reset to discard any saved paging state.
     (async/onto-chan customer-ids-ch
-      (repeatedly 20000 #(rand-int 10000)))
+      (repeatedly (+ 100 (rand-int 1000))
+        #(rand-int 100000)))
     (go
       (>! job-ch "Starting customer scan ...")
       (loop [row-count 0]
@@ -82,10 +83,9 @@
   CustomerScanner
 
   (scan [this]
-    (let [customer-ids-ch (if source-file
-                            (read-from-source-file source-file fetch-size)
-                            (do-scan this reset))]
-      (pipe customer-ids-ch (chan block-size)))))
+    (if source-file
+      (read-from-source-file source-file fetch-size)
+      (do-scan this))))
 
 
 (defn customer-scanner []

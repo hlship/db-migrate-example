@@ -62,16 +62,7 @@
       (loop []
         (when-let [customer-id (<! customer-ids-ch)]
           (let [result (<! (migrate-customer customer-migrator dry-run? customer-id job-ch))
-                output-result (cond
-
-                                (true? result)
-                                :migrated
-
-
-                                (false? result)
-                                :skipped
-
-                                )]
+                output-result (if result :migrated :skipped)]
             (>! output-ch output-result)
             (recur))))
 
@@ -121,6 +112,7 @@
                            failed
                            (humanize-ellapsed-ms (- (System/currentTimeMillis) start-ms))))
               (recur counts'))))
+        (<! (async/timeout 250))
         (>! job-ch (change-status :success))
         (close! job-ch)))))
 

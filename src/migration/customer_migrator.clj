@@ -25,7 +25,8 @@
   {:log-file s/Str})
 
 
-(defn migrate-single-customer [connection dry-run? customer-id job-ch]
+(defn migrate-single-customer
+  [connection dry-run? customer-id job-ch]
   (go
     (>! job-ch (str "Checking customer " customer-id))
 
@@ -34,10 +35,17 @@
 
     (<! (timeout (+ 100 (rand-int 200))))
 
-    (if (< (rand) 0.3)
+    (cond
+
+      (< (rand) 0.3)
       false                                                 ; pretend previously migrated
+
+      dry-run?
+      true
+
+      :else
       (do
-        (>!  job-ch (str "Migrating customer " customer-id))
+        (>! job-ch (str "Migrating customer " customer-id))
 
         ;; Again, sleep instead of actual work
 
@@ -77,9 +85,10 @@
                 (Date.)
                 customer-id
                 (- (System/currentTimeMillis) start-ms))
-              (flush))
+              (flush)))
 
-            result))))))
+          ;; The result is returned after the log file is optionally written.
+          result)))))
 
 (defn customer-migrator
   []

@@ -4,11 +4,12 @@
 
 (defn go [& args]
   (apply -main
-    (into args
+    (into
       ["status-board/mode=minimal"
        "customer-migrator/log-file=target/migrated.txt"
        "customer-scanner/paging-state-path=target/paging-state"
-       "customer-migration/processes=5"])))
+       "customer-migration/processes=1"]
+      args)))
 
 (defn viz [] (-main "-V"))
 

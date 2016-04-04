@@ -1,5 +1,6 @@
 (ns migration.system
   (:require [com.stuartsierra.component :as component]
+            [clojure.core.async :refer [<!!]]
             [com.walmartlabs.active-status.component :refer [status-board]]
             [io.aviso.config :as config]
             [migration.customer-migrator :refer [customer-migrator]]
@@ -36,6 +37,6 @@
                                                            :connection]))
                     (config/configure-components)
                     (component/start-system))]
-    (-> started :migration-overseer overseer/run-migration)
+    (-> started :migration-overseer overseer/run-migration <!!)
     (component/stop-system started)
     nil))
