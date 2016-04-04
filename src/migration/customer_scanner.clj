@@ -31,7 +31,7 @@
     ;; This is where the query would normally go; further, this is where we woudl use
     ;; reset to discard any saved paging state.
     (async/onto-chan customer-ids-ch
-      (repeatedly (+ 100 (rand-int 1000))
+      (repeatedly (+ 1000 (rand-int 1000))
         #(rand-int 100000)))
     (go
       (>! job-ch "Starting customer scan ...")
@@ -40,7 +40,7 @@
           (do
             (>! ch customer-id)
             (when (and (pos? row-count)
-                    (zero? (mod row-count 1000)))
+                    (zero? (mod row-count 100)))
               (>! job-ch (format "Scanned %,d customer rows" row-count)))
             (recur (inc row-count)))
           (do

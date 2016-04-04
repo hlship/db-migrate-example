@@ -33,7 +33,7 @@
     ;; Here's where we'd do a database query with the connection
     ;; Instead we sleep
 
-    (<! (timeout (+ 100 (rand-int 200))))
+    (<! (timeout (+ 10 (rand-int 50))))
 
     (cond
 
@@ -49,7 +49,7 @@
 
         ;; Again, sleep instead of actual work
 
-        (<! (timeout (+ 150 (rand-int 2000))))
+        (<! (timeout (+ 50 (rand-int 200))))
 
         true))))
 
