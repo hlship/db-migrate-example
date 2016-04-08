@@ -27,6 +27,5 @@ But what we've kept is:
 
 Here's what is looks like in action:
 
-<iframe src="https://player.vimeo.com/video/162131294" width="500" height="292" frameborder="0" webkitallowfullscreen mozallowfullscreen allowfullscreen></iframe>
-<p><a href="https://vimeo.com/162131294">Demo of the active-status library</a> from <a href="https://vimeo.com/hlship">Howard Lewis Ship</a> on <a href="https://vimeo.com">Vimeo</a>.</p>
+![example execution](db-migrate.gif)
 
