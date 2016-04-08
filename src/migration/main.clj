@@ -12,7 +12,7 @@
     :default :localhost
     :default-desc "localhost"
     :parse-fn keyword
-    :validate [#{:localhost :staging :production} "Must be localhost, staging, or production."]]
+    :validate [(set migration.system/environments) "Must be localhost, staging, or production."]]
 
    ["-f" "--file FILE" "Source file for customer ids"
     :id :source-file]
@@ -52,7 +52,10 @@
     (print-help summary nil)
 
     [{:keys [visualize environment reset dry-run source-file]} options
-     system (migration-system/migration-system)]
+     system (migration-system/migration-system {:dry-run?    dry-run
+                                                :reset?      reset
+                                                :source-file source-file
+                                                :environment environment})]
 
     visualize
     (do
@@ -63,8 +66,4 @@
       nil)
 
     :else
-    (migration-system/execute system {:args      arguments
-                                      :overrides {:customer-scanner   {:source-path source-file
-                                                                       :reset       reset}
-                                                  :connection         {:endpoint environment}
-                                                  :customer-migration {:dry-run dry-run}}})))
+    (migration-system/execute system {:args arguments})))

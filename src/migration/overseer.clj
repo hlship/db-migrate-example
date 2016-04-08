@@ -53,7 +53,7 @@
 
   :failed isn't meaningful in this example code (failures could occur in the original
   code this is extracted from)."
-  [customer-migrator customer-ids-ch dry-run? status-board prefix]
+  [customer-migrator customer-ids-ch status-board prefix]
   (let [job-ch (add-job status-board)
         output-ch (chan 1)]
     (go
@@ -61,7 +61,7 @@
       (>! job-ch "Waiting for customers to migrate")
       (loop []
         (when-let [customer-id (<! customer-ids-ch)]
-          (let [result (<! (migrate-customer customer-migrator dry-run? customer-id job-ch))
+          (let [result (<! (migrate-customer customer-migrator customer-id job-ch))
                 output-result (if result :migrated :skipped)]
             (>! output-ch output-result)
             (recur))))
@@ -79,11 +79,10 @@
     is complete."))
 
 (s/defschema MigrationOverseerConfig
-  {:processes s/Int
-   :dry-run   s/Bool})
+  {:processes s/Int})
 
 (defrecord MigrationOverseerComponent [customer-scanner status-board customer-migrator
-                                       processes dry-run]
+                                       processes dry-run?]
 
   config/Configurable
   (configure [this configuration]
@@ -95,7 +94,7 @@
       (let [start-ms (System/currentTimeMillis)
             customer-ids-ch (customer-scanner/scan customer-scanner)
             process-chs (for [i (range processes)]
-                          (start-process customer-migrator customer-ids-ch dry-run status-board
+                          (start-process customer-migrator customer-ids-ch status-board
                             (format "Process #%2d: " (inc i))))
             combined-ch (async/merge process-chs)
             job-ch (add-job status-board)]
@@ -106,7 +105,7 @@
             (let [{:keys [migrated skipped failed]
                    :as   counts'} (update counts result inc)]
               (>! job-ch (format "%s %,d customers (%,d previously migrated, %,d failures) in %s"
-                           (if dry-run "Migration needed for" "Migrated")
+                           (if dry-run? "Migration needed for" "Migrated")
                            migrated
                            skipped
                            failed
@@ -117,7 +116,7 @@
         (close! job-ch)))))
 
 (defn migration-overseer
-  []
-  (-> (map->MigrationOverseerComponent {})
+  [dry-run?]
+  (-> (map->MigrationOverseerComponent {:dry-run? dry-run?})
       (component/using [:customer-scanner :status-board :customer-migrator])
       (config/with-config-schema :customer-migration MigrationOverseerConfig)))

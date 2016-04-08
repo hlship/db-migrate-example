@@ -10,13 +10,11 @@
 
 (defprotocol CustomerMigrator
 
-  (migrate-customer [this dry-run? customer-id job-ch]
+  (migrate-customer [this customer-id job-ch]
     "Migrate the individual customer identified by the given id.
 
-    If dry-run? is true, only the check takes place; no new data is written.
-
     Returns a channel that conveys:
-    * true if the customer was migrated (or needs to be migrated)
+    * true if the customer was migrated (or needs to be migrated, during a dry run)
     * false if the customer was previously migrated
 
     Passed a status board job channel, on which to post progress updates."))
@@ -55,7 +53,8 @@
 
 (defrecord CustomerMigratorComponent [connection
                                       ^File log-file
-                                      ^Writer log-writer]
+                                      ^Writer log-writer
+                                      dry-run?]
 
   config/Configurable
 
@@ -74,7 +73,7 @@
     this)
 
   CustomerMigrator
-  (migrate-customer [_ dry-run? customer-id job-ch]
+  (migrate-customer [_ customer-id job-ch]
     (let [start-ms (System/currentTimeMillis)]
       (go
         (let [result (<! (migrate-single-customer connection dry-run? customer-id job-ch))]
@@ -91,8 +90,8 @@
           result)))))
 
 (defn customer-migrator
-  []
+  [dry-run?]
   (->
-    (map->CustomerMigratorComponent [])
+    (map->CustomerMigratorComponent {:dry-run? dry-run?})
     (component/using [:connection])
     (config/with-config-schema :customer-migrator CustomerMigratorConfig)))

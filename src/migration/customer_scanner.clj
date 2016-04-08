@@ -11,9 +11,6 @@
 
 (s/defschema CustomerScannerSchema
   {:paging-state-path            s/Str
-   ;; source-path is actually set from the --file command line option
-   (s/optional-key :source-path) (s/maybe s/Str)
-   :reset                        s/Bool                     ; ignore any paging state, start from scratch
    :block-size                   s/Int
    :fetch-size                   s/Int})
 
@@ -24,12 +21,12 @@
 
 (defn ^:private do-scan
   [component]
-  (let [{:keys [status-board connection fetch-size block-size reset]} component
+  (let [{:keys [status-board connection fetch-size block-size reset?]} component
         job-ch (add-job status-board)
         ch (chan block-size)
         customer-ids-ch (chan fetch-size)]
-    ;; This is where the query would normally go; further, this is where we woudl use
-    ;; reset to discard any saved paging state.
+    ;; This is where the query would normally go; further, this is where we would use
+    ;; the reset? flag to discard any saved paging state.
     (async/onto-chan customer-ids-ch
       (repeatedly (+ 1000 (rand-int 1000))
         #(rand-int 100000)))
@@ -64,14 +61,13 @@
                                      ^File paging-state-file
                                      fetch-size
                                      block-size
-                                     reset]
+                                     reset?]
 
   config/Configurable
   (configure [this configuration]
     (-> this
-        (assoc :paging-state-file (-> configuration :paging-state-path io/file)
-               :source-file (some-> configuration :source-path io/file))
-        (merge (select-keys configuration [:block-size :fetch-size :reset]))))
+        (assoc :paging-state-file (-> configuration :paging-state-path io/file))
+        (merge (select-keys configuration [:block-size :fetch-size]))))
 
   component/Lifecycle
   (start [this]
@@ -88,7 +84,9 @@
       (do-scan this))))
 
 
-(defn customer-scanner []
-  (-> (map->CustomerScannerComponent {})
+(defn customer-scanner
+  [reset? source-path]
+  (-> (map->CustomerScannerComponent {:reset? reset?
+                                      :source-file (some-> source-path io/file)})
       (component/using [:status-board :connection])
       (config/with-config-schema :customer-scanner CustomerScannerSchema)))

@@ -7,4 +7,5 @@
                  [org.clojure/tools.cli "0.3.3"]
                  [io.aviso/config "0.1.12"]]
   :main migration.main
+  :uberjar-name "db-migrate-standalone.jar"
   :profiles {:uberjar {:aot [migration.main]}})
