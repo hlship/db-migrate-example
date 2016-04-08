@@ -1,4 +1,4 @@
-# DB Migrate Example
+# Database Migration Example
 
 Ever wonder how to properly use a bunch of Clojure technology together:
 
@@ -17,16 +17,17 @@ The original code performs an update across a huge number of rows stored
 in a Cassandra database.
 
 This version has had all the actual database work replaced with sleeps,
-so it's a bit of a toy. 
-But what we've kept is:
+but it still serves as a great example of how to each of these concerns works
+with all of the others:
 
 * Parsing of command line options
 * Creation of a component system
 * Visualization of the system components
+* Configuration of system components
 * Execution of the "migration", using asynchronous processing jobs
 * Dynamic console output of the status of all asynchronous jobs
 
-Here's what is looks like in action:
+Here's what the tool looks like in action:
 
 ![example execution](db-migrate.gif)
 
@@ -51,25 +52,25 @@ request a visualization of the component system map:
 
    java -jar target/db-migration-standalone.jar --visualize
    
-The system map is not complicated:
+The system map for this simple tool is not complicated:
    
 ![system components](system.png)
    
-But in real applications at Walmartlabs, we might have dozens of components
+... but in real applications at Walmartlabs, we might have dozens of components
 in a system, so having the option to get a visualization can be quite useful.
 
-But normally, the startup code then asks the :migration-overseer component 
+The startup code then asks the :migration-overseer component 
 to start the migration; this kicks off a number of asynchronous processes to do the work.
 
 Effectively, the :customer-scanner component performs a query against the database
 to get a list of customers ids, which is fed into a core.async channel.
 In this example code, it just makes up customer ids and has some random sleeps.
 
-The overseer, meanwhile, has created migration jobs.
+The overseer, meanwhile, has created a set number of migration jobs.
 The migration jobs take customer-ids from the scanner's channel.
 They act as a wrapper around the :customer-migrator component, which migrates a single customer.
 
-As each customer is migrated (or, alternately, checked to see if it has been previosly migrated),
+As each customer is migrated (or, alternately, checked to see if it has been previously migrated),
 the migrator job writes a status value to a channel that is used by the overseer to track how many
 customers have been migrated.
 
@@ -77,7 +78,7 @@ This continues until first all the customer ids have been read from the database
 all the customer jobs have completed.
 
 As different asynchronous jobs complete, their line in the status board is moved to the top of the list;
-this isn't too aparent until the very end, when everything is shutting down.
+this isn't too apparent until the very end, when everything is shutting down.
 
 The use of channels and buffers provides backflow: if the customer migrating jobs are keeping up with the flow
 of customer ids from the scanner, the scanner will end up parking for a bit to let the jobs keep up.
@@ -85,15 +86,15 @@ This may seem like a minor detail, but without backflow of some sort, we could e
 migrate. 
 Instead, we have a system where the database query will keep just a bit ahead of the customer migrating jobs.
 
-The use of the config library means that the several factors can be "tweaked" to find the best performing solution: the number of processing jobs, the number of customer ids fetched at a time, and the size of the buffer on the 
+The use of the config library means that the several factors can be "tweaked" to find the best performing solution: the number of processing jobs, the number of customer ids fetched at a time, and the size of the buffer inside the 
 customer ids channel.
 
 ## The Status Board
 
 The status board is the code that writes to the console; the "active" part of active-status is that a line
-on the board is reserved for each job, and the line updates in place.
+on the board is reserved for each job, and the line updates in place, as changes occur.
 
-There's a lot going on there, as new jobs can be created as needed, and existing jobs may complete.
+There's a lot going on there, as new jobs can be created on-the-fly as needed, and existing jobs may complete.
 Further, when a job is updated, its text is written as bold (bright) text; after a fraction of a second with no
 further updates, it is rewritten using normal (dim) text.
 
