@@ -70,7 +70,7 @@ The overseer, meanwhile, has created a set number of migration jobs.
 The migration jobs take customer-ids from the scanner's channel.
 They act as a wrapper around the :customer-migrator component, which migrates a single customer.
 
-As each customer is migrated (or, alternately, checked to see if it has been previously migrated),
+After each customer is migrated (or, alternately, checked to see if it has been previously migrated),
 the migrator job writes a status value to a channel that is used by the overseer to track how many
 customers have been migrated.
 
@@ -80,8 +80,8 @@ all the customer jobs have completed.
 As different asynchronous jobs complete, their line in the status board is moved to the top of the list;
 this isn't too apparent until the very end, when everything is shutting down.
 
-The use of channels and buffers provides backflow: if the customer migrating jobs are keeping up with the flow
-of customer ids from the scanner, the scanner will end up parking for a bit to let the jobs keep up.
+The use of channels and buffers provides backflow: if the customer migrating jobs are failing to keep up with the flow
+of customer ids from the scanner, the scanner will end up parking for a bit to let the jobs catch up.
 This may seem like a minor detail, but without backflow of some sort, we could end up filling memory with customer ids to
 migrate. 
 Instead, we have a system where the database query will keep just a bit ahead of the customer migrating jobs.
