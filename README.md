@@ -50,7 +50,7 @@ For example, to have only 5 processes, instead of 20:
 Once the system is constructed, but not started, it is possible to
 request a visualization of the component system map:
 
-   java -jar target/db-migration-standalone.jar --visualize
+    java -jar target/db-migration-standalone.jar --visualize
    
 The system map for this simple tool is not complicated:
    
